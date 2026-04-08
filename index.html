@@ -8,109 +8,92 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: #0c0e12;
-            font-family: 'Inter', sans-serif;
-        }
-        .chart-container {
-            background-color: #1a1d23;
-            border: 1px solid #2d333d;
-        }
+        body { background-color: #0c0e12; font-family: 'Inter', sans-serif; color: white; margin: 0; }
+        .chart-container { background-color: #1a1d23; border: 1px solid #2d333d; }
         .tab-btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s ease;
-            border: 1px solid #2d333d;
-            color: #64748b;
-            background: #252a31;
+            padding: 8px 16px; border-radius: 6px; font-size: 11px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s ease;
+            border: 1px solid #2d333d; color: #64748b; background: #252a31;
+            cursor: pointer;
         }
-        .tab-btn:hover {
-            border-color: #4b5563;
-            color: #ffffff;
-        }
+        .tab-btn:hover { border-color: #4b5563; color: white; }
         .tab-btn.active {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-            color: white;
+            background-color: #3b82f6; border-color: #3b82f6; color: white;
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
         }
-
-        /* Custom Scrollbar for the Table (Neon Blue) */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px; /* For horizontal scroll */
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #111418;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #3b82f6;
-            border-radius: 10px;
-        }
-
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111418; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
         .hidden { display: none; }
-
-        /* Ensure table cells don't squish too much */
-        td, th {
-            min-width: 180px;
-            max-width: 400px;
-            word-wrap: break-word;
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+        .feed-item { animation: slideIn 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-6">
+<body class="p-6">
 
-<div class="chart-container w-full max-w-5xl p-10 rounded-2xl shadow-2xl">
-
-    <div class="mb-8">
-        <div class="flex items-center gap-3 mb-2">
-            <span class="bg-blue-600/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/30 uppercase tracking-widest">
-                Support Team
-            </span>
-            <div class="h-[1px] flex-1 bg-gray-800"></div>
+<div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="chart-container p-4 rounded-xl border-l-4 border-blue-500 shadow-lg">
+            <p class="text-[10px] uppercase font-bold text-gray-500">Total Reports</p>
+            <h2 id="stat-total" class="text-3xl font-black">0</h2>
         </div>
-        <h1 class="text-white text-3xl font-black tracking-tight uppercase mb-6">
-            Trending <span class="text-blue-500">Issues Reported</span>
-        </h1>
+        <div class="chart-container p-4 rounded-xl border-l-4 border-orange-500 shadow-lg">
+            <p class="text-[10px] uppercase font-bold text-gray-500">Active WIP</p>
+            <h2 id="stat-wip" class="text-3xl font-black text-orange-500">0</h2>
+        </div>
+        <div class="chart-container p-4 rounded-xl border-l-4 border-green-500 shadow-lg">
+            <p class="text-[10px] uppercase font-bold text-gray-500">Resolved Sessions</p>
+            <h2 id="stat-fixed" class="text-3xl font-black text-green-500">0</h2>
+        </div>
+    </div>
 
-        <div class="flex flex-wrap gap-2 mb-4">
+    <div class="chart-container w-full p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+
+        <div class="inline-block bg-blue-500/10 text-blue-500 border border-blue-500/20 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2">
+            Support Team
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-white text-2xl font-black tracking-tight uppercase italic">Trending <span class="text-blue-500">Issues</span></h1>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search keywords..."
+                       class="bg-black/40 border border-gray-700 rounded-lg px-4 py-2 text-xs focus:outline-none focus:border-blue-500 w-full md:w-64 text-white">
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-6">
             <button onclick="switchSheet('overall')" class="tab-btn active" id="btn-overall">Overall Status</button>
             <button onclick="switchSheet('crashes')" class="tab-btn" id="btn-crashes">Crashes</button>
             <button onclick="switchSheet('ui')" class="tab-btn" id="btn-ui">UI / Visual Bugs</button>
             <button onclick="switchSheet('vehicles')" class="tab-btn" id="btn-vehicles">Vehicles</button>
             <button onclick="switchSheet('performance')" class="tab-btn" id="btn-performance">Performance</button>
         </div>
-    </div>
 
-    <div class="h-[500px] w-full relative">
-
-        <div id="graph-wrapper" class="h-full w-full">
-            <canvas id="statsChart"></canvas>
+        <div class="h-[450px] w-full relative">
+            <div id="graph-wrapper" class="h-full w-full"><canvas id="statsChart"></canvas></div>
+            <div id="table-wrapper" class="hidden h-full w-full overflow-auto custom-scrollbar border border-gray-800 rounded-lg bg-black/20">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-[#1a1d23] text-blue-500 text-[10px] uppercase tracking-widest z-20 shadow-md">
+                    <tr id="table-header-row"></tr>
+                    </thead>
+                    <tbody id="table-body" class="text-gray-300 text-sm"></tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="table-wrapper" class="hidden h-full w-full overflow-auto custom-scrollbar border border-gray-800 rounded-lg">
-            <table class="w-full text-left border-collapse">
-                <thead class="sticky top-0 bg-[#1a1d23] text-blue-500 text-[10px] uppercase tracking-widest z-20 shadow-md">
-                <tr id="table-header-row">
-                </tr>
-                </thead>
-                <tbody id="table-body" class="text-gray-300 text-sm">
-                </tbody>
-            </table>
+        <div class="mt-8 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div id="activity-feed" class="text-[10px] font-bold uppercase tracking-widest text-blue-400 flex gap-4 overflow-hidden h-4">
+                <span class="feed-item text-gray-500 italic">Dashboard Initialize: Awaiting Operations...</span>
+            </div>
+            <span class="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live Sync Status
+            </span>
         </div>
-
-    </div>
-
-    <div class="mt-8 flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-widest border-t border-gray-800 pt-6">
-        <span>Data Source: Live Feedback Logs</span>
-        <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]"></span>
-            Live Sync Active
-        </span>
     </div>
 </div>
 
