@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Dashboard | Trending Issues</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0c0e12;
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            background-color: #1a1d23;
+            border: 1px solid #2d333d;
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            border: 1px solid #2d333d;
+            color: #64748b;
+            background: #252a31;
+        }
+        .tab-btn:hover {
+            border-color: #4b5563;
+            color: #ffffff;
+        }
+        .tab-btn.active {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Custom Scrollbar for the Table (Neon Blue) */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px; /* For horizontal scroll */
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111418;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 10px;
+        }
+
+        .hidden { display: none; }
+
+        /* Ensure table cells don't squish too much */
+        td, th {
+            min-width: 180px;
+            max-width: 400px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+<div class="chart-container w-full max-w-5xl p-10 rounded-2xl shadow-2xl">
+
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+            <span class="bg-blue-600/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/30 uppercase tracking-widest">
+                Support Team
+            </span>
+            <div class="h-[1px] flex-1 bg-gray-800"></div>
+        </div>
+        <h1 class="text-white text-3xl font-black tracking-tight uppercase mb-6">
+            Trending <span class="text-blue-500">Issues Reported</span>
+        </h1>
+
+        <div class="flex flex-wrap gap-2 mb-4">
+            <button onclick="switchSheet('overall')" class="tab-btn active" id="btn-overall">Overall Status</button>
+            <button onclick="switchSheet('crashes')" class="tab-btn" id="btn-crashes">Crashes</button>
+            <button onclick="switchSheet('ui')" class="tab-btn" id="btn-ui">UI / Visual Bugs</button>
+            <button onclick="switchSheet('vehicles')" class="tab-btn" id="btn-vehicles">Vehicles</button>
+            <button onclick="switchSheet('performance')" class="tab-btn" id="btn-performance">Performance</button>
+        </div>
+    </div>
+
+    <div class="h-[500px] w-full relative">
+
+        <div id="graph-wrapper" class="h-full w-full">
+            <canvas id="statsChart"></canvas>
+        </div>
+
+        <div id="table-wrapper" class="hidden h-full w-full overflow-auto custom-scrollbar border border-gray-800 rounded-lg">
+            <table class="w-full text-left border-collapse">
+                <thead class="sticky top-0 bg-[#1a1d23] text-blue-500 text-[10px] uppercase tracking-widest z-20 shadow-md">
+                <tr id="table-header-row">
+                </tr>
+                </thead>
+                <tbody id="table-body" class="text-gray-300 text-sm">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="mt-8 flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-widest border-t border-gray-800 pt-6">
+        <span>Data Source: Live Feedback Logs</span>
+        <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]"></span>
+            Live Sync Active
+        </span>
+    </div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>

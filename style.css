@@ -1,0 +1,23 @@
+/* Custom Glows and Tab Styles */
+.tab-btn {
+    @apply px-4 py-2 rounded text-xs font-bold transition-all border border-gray-700 text-gray-400;
+    background: #252a31;
+}
+
+.tab-btn:hover {
+    @apply border-gray-500 text-white;
+}
+
+.tab-btn.active {
+    @apply border-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)];
+    background: #3b82f6;
+}
+
+/* Scrollbar and body reset */
+body {
+    background-color: #0c0e12;
+}
+
+#patrol-progress {
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
+}
