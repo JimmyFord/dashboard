@@ -9,19 +9,17 @@ const SHEET_CONFIG = {
 let currentChart = null;
 let stats = { wip: 0, fixed: 0, globalTotal: 0 };
 
-// Restore the "Support Team" brand and Global Count
 async function updateGlobalStats() {
     let total = 0;
     const categories = ['crashes', 'ui', 'vehicles', 'performance'];
-
     for (const cat of categories) {
         try {
             const res = await fetch(SHEET_CONFIG[cat].url);
-            const text = await res.text(); // Fixed the .res.text() typo here
+            const text = await res.text();
             const rowCount = text.split('\n').filter(row => row.trim() !== "").length - 1;
             total += Math.max(0, rowCount);
         } catch (e) {
-            console.error("Error counting category: " + cat, e);
+            console.error("Fetch error for " + cat, e);
         }
     }
     stats.globalTotal = total;
@@ -30,9 +28,10 @@ async function updateGlobalStats() {
 }
 
 async function switchSheet(category) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    const btn = document.getElementById(`btn-${category}`);
-    if(btn) btn.classList.add('active');
+    const btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`btn-${category}`);
+    if(activeBtn) activeBtn.classList.add('active');
 
     try {
         const config = SHEET_CONFIG[category];
@@ -51,11 +50,17 @@ async function switchSheet(category) {
 }
 
 function displayDynamicTable(rows, hiddenCols) {
-    document.getElementById('graph-wrapper').classList.add('hidden');
-    document.getElementById('table-wrapper').classList.remove('hidden');
+    const graphWrap = document.getElementById('graph-wrapper');
+    const tableWrap = document.getElementById('table-wrapper');
+    if(graphWrap) graphWrap.classList.add('hidden');
+    if(tableWrap) tableWrap.classList.remove('hidden');
+
     const tableHeadRow = document.getElementById('table-header-row');
     const tableBody = document.getElementById('table-body');
-    tableHeadRow.innerHTML = ''; tableBody.innerHTML = '';
+    if(!tableHeadRow || !tableBody) return;
+    
+    tableHeadRow.innerHTML = ''; 
+    tableBody.innerHTML = '';
 
     const headers = rows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
     headers.forEach((header, index) => {
@@ -67,8 +72,8 @@ function displayDynamicTable(rows, hiddenCols) {
     });
 
     const actionTh = document.createElement('th');
-    actionTh.className = "p-4 border-b border-gray-800 text-blue-500 font-bold text-[10px] text-center uppercase tracking-widest";
-    actionTh.innerText = "Operation Panel";
+    actionTh.className = "p-4 border-b border-gray-800 text-blue-500 font-bold text-[10px] text-center uppercase";
+    actionTh.innerText = "Operations";
     tableHeadRow.appendChild(actionTh);
 
     rows.slice(1).forEach((row, rowIndex) => {
@@ -83,7 +88,6 @@ function displayDynamicTable(rows, hiddenCols) {
             let content = cell.replace(/"/g, "").trim() || "—";
             const low = content.toLowerCase();
 
-            // Priority Logic (Heatmap)
             if (low.includes('crash') || low.includes('fatal') || low.includes('exploit')) {
                 td.innerHTML = `<span class="bg-red-500/20 text-red-500 px-2 py-0.5 rounded text-[8px] font-black border border-red-500/50 mr-2">CRITICAL</span> ${content}`;
             } else if (low.includes('ui') || low.includes('typo') || low.includes('visual')) {
@@ -122,7 +126,7 @@ function filterTable() {
             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
             row.style.backgroundColor = "rgba(59, 130, 246, 0.3)";
             row.classList.add('animate-pulse');
-            break;
+            break; 
         }
     }
 }
@@ -130,19 +134,20 @@ function filterTable() {
 function updateStatus(index, status) {
     const row = document.getElementById(`row-${index}`);
     const badge = document.getElementById(`status-badge-${index}`);
+    if(!row || !badge) return;
     const issueName = row.cells[0].innerText.replace('CRITICAL', '').replace('MINOR', '').trim();
 
     if (status === 'fixed') {
         row.style.backgroundColor = "rgba(34, 197, 94, 0.08)";
         row.style.borderLeft = "4px solid #22c55e";
         badge.innerHTML = `<span class="text-green-500">● Resolved</span>`;
-        logActivity(`Closed Issue: ${issueName}`);
+        logActivity(`Resolved: ${issueName}`);
         stats.fixed++;
     } else {
         row.style.backgroundColor = "rgba(249, 115, 22, 0.08)";
         row.style.borderLeft = "4px solid #f97316";
         badge.innerHTML = `<span class="text-orange-500 animate-pulse">⚙ In Progress</span>`;
-        logActivity(`In Progress: ${issueName}`);
+        logActivity(`WIP: ${issueName}`);
         stats.wip++;
     }
     document.getElementById('stat-wip').innerText = stats.wip;
@@ -151,6 +156,7 @@ function updateStatus(index, status) {
 
 function logActivity(text) {
     const feed = document.getElementById('activity-feed');
+    if(!feed) return;
     const item = document.createElement('span');
     item.className = "feed-item whitespace-nowrap";
     item.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
@@ -159,21 +165,31 @@ function logActivity(text) {
 }
 
 function displayGraph(rows) {
-    document.getElementById('graph-wrapper').classList.remove('hidden');
-    document.getElementById('table-wrapper').classList.add('hidden');
+    const graphWrap = document.getElementById('graph-wrapper');
+    const tableWrap = document.getElementById('table-wrapper');
+    if(graphWrap) graphWrap.classList.remove('hidden');
+    if(tableWrap) tableWrap.classList.add('hidden');
+
     const labels = []; const data = [];
     for (let i = 1; i < rows.length; i++) {
         const cols = rows[i].split(',');
-        if (cols[0] && !isNaN(cols[1])) { labels.push(cols[0].replace(/"/g, "")); data.push(parseInt(cols[1])); }
+        if (cols[0] && !isNaN(cols[1])) { 
+            labels.push(cols[0].replace(/"/g, "")); 
+            data.push(parseInt(cols[1])); 
+        }
     }
     renderChart(labels, data);
 }
 
 function renderChart(labels, data) {
-    const ctx = document.getElementById('statsChart').getContext('2d');
+    const ctxEl = document.getElementById('statsChart');
+    if(!ctxEl) return;
+    const ctx = ctxEl.getContext('2d');
     if (currentChart) currentChart.destroy();
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, '#3b82f6'); gradient.addColorStop(1, 'rgba(30, 58, 138, 0.1)');
+    gradient.addColorStop(0, '#3b82f6'); 
+    gradient.addColorStop(1, 'rgba(30, 58, 138, 0.1)');
+    
     currentChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -191,6 +207,8 @@ function renderChart(labels, data) {
     });
 }
 
-// Init
-updateGlobalStats();
-switchSheet('overall');
+// Ensure the code runs ONLY after the page is ready
+window.onload = () => {
+    updateGlobalStats();
+    switchSheet('overall');
+};
